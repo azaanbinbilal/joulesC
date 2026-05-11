@@ -1,98 +1,58 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { NeonButton } from '@/components/NeonButton';
+import { Screen } from '@/components/Screen';
+import { buildGoalPlan, calcBMR, calcTDEE } from '@/lib/health';
+import { useProfileStore } from '@/store/profile';
 
-export default function HomeScreen() {
+export default function Dashboard() {
+  const profile = useProfileStore((s) => s.profile);
+  const clearProfile = useProfileStore((s) => s.clearProfile);
+
+  if (!profile) return null;
+
+  const bmr = calcBMR(profile.weightKg, profile.heightCm, profile.age, profile.sex);
+  const tdee = calcTDEE(bmr, profile.activity);
+
+  let target = Math.round(tdee);
+  if (profile.goal && profile.goal.direction !== 'maintain') {
+    const plan = buildGoalPlan({
+      currentWeightKg: profile.weightKg,
+      targetWeightKg: profile.goal.targetWeightKg,
+      weeks: profile.goal.weeks,
+      tdee,
+    });
+    target = plan.dailyKcalTarget;
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <Screen>
+      <Text className="text-text-secondary text-sm">Welcome back,</Text>
+      <Text className="text-text-primary text-3xl font-bold">{profile.name || 'there'}</Text>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <View className="bg-bg-card border border-border-subtle rounded-2xl p-6 mt-8">
+        <Text className="text-text-secondary text-xs uppercase tracking-widest">
+          Today&apos;s target
+        </Text>
+        <View className="flex-row items-baseline mt-2">
+          <Text className="text-neon-green text-6xl font-black">{target}</Text>
+          <Text className="text-text-secondary text-lg ml-2">kcal</Text>
+        </View>
+      </View>
+
+      <View className="bg-bg-card border border-border-subtle rounded-2xl p-5 mt-3">
+        <Text className="text-text-secondary text-xs uppercase tracking-widest mb-2">
+          Coming next
+        </Text>
+        <Text className="text-text-primary text-base leading-6">
+          Food search · macro rings · goal-progress graph · Gemini photo logging.
+        </Text>
+      </View>
+
+      <View className="flex-1" />
+      <View className="pb-6">
+        <NeonButton label="Reset profile" variant="ghost" onPress={clearProfile} />
+      </View>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
