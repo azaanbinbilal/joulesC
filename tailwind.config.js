@@ -12,7 +12,7 @@ module.exports = {
           elevated: '#181C26',
         },
         neon: {
-          green: '#39FF8B',
+          green: '#00FF87',
           cyan: '#00E5FF',
           violet: '#8A5CF6',
           pink: '#FF3DAC',
@@ -29,7 +29,11 @@ module.exports = {
         },
       },
       fontFamily: {
-        display: ['SpaceMono'],
+        sans: ['SpaceGrotesk_400Regular'],
+        medium: ['SpaceGrotesk_500Medium'],
+        semibold: ['SpaceGrotesk_600SemiBold'],
+        bold: ['SpaceGrotesk_700Bold'],
+        display: ['SpaceGrotesk_700Bold'],
       },
     },
   },

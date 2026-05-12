@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 interface Option<T> {
   value: T;
@@ -12,25 +13,66 @@ interface Props<T extends string> {
   label?: string;
 }
 
-export function SegmentedControl<T extends string>({ options, value, onChange, label }: Props<T>) {
+export function SegmentedControl<T extends string>({
+  options,
+  value,
+  onChange,
+  label,
+}: Props<T>) {
   return (
-    <View className="mb-4">
+    <View style={{ marginBottom: 16 }}>
       {label ? (
-        <Text className="text-text-secondary text-xs uppercase tracking-widest mb-2">{label}</Text>
+        <Text
+          style={{
+            fontFamily: 'SpaceGrotesk_500Medium',
+            color: '#A0A6B8',
+            fontSize: 11,
+            letterSpacing: 2,
+            textTransform: 'uppercase',
+            marginBottom: 8,
+          }}
+        >
+          {label}
+        </Text>
       ) : null}
-      <View className="flex-row bg-bg-card border border-border-subtle rounded-xl p-1">
+      <View
+        style={{
+          flexDirection: 'row',
+          backgroundColor: 'rgba(18,21,28,0.85)',
+          borderColor: '#1F2330',
+          borderWidth: 1,
+          borderRadius: 14,
+          padding: 4,
+        }}
+      >
         {options.map((opt) => {
           const selected = opt.value === value;
           return (
             <Pressable
               key={opt.value}
               onPress={() => onChange(opt.value)}
-              className={`flex-1 py-2 rounded-lg ${selected ? 'bg-neon-green' : ''}`}
+              style={{
+                flex: 1,
+                paddingVertical: 10,
+                borderRadius: 10,
+                overflow: 'hidden',
+              }}
             >
+              {selected ? (
+                <LinearGradient
+                  colors={['#5EFFB1', '#00FF87']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                />
+              ) : null}
               <Text
-                className={`text-center text-sm font-semibold ${
-                  selected ? 'text-bg' : 'text-text-secondary'
-                }`}
+                style={{
+                  textAlign: 'center',
+                  fontFamily: 'SpaceGrotesk_600SemiBold',
+                  fontSize: 14,
+                  color: selected ? '#05060A' : '#A0A6B8',
+                }}
               >
                 {opt.label}
               </Text>

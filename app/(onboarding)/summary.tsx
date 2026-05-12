@@ -1,5 +1,7 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { NeonButton } from '@/components/NeonButton';
 import { Screen } from '@/components/Screen';
@@ -16,22 +18,14 @@ import { useOnboardingStore } from '@/store/onboarding';
 import { useProfileStore } from '@/store/profile';
 import type { Profile } from '@/types/profile';
 
-const FEASIBILITY_COLOR = {
-  safe: 'text-neon-green',
-  aggressive: 'text-neon-amber',
-  unsafe: 'text-neon-pink',
-} as const;
-
-const FEASIBILITY_BORDER = {
-  safe: 'border-neon-green/40',
-  aggressive: 'border-neon-amber/40',
-  unsafe: 'border-neon-pink/40',
-} as const;
-
-const FEASIBILITY_TITLE = {
-  safe: 'Looks healthy',
-  aggressive: 'Aggressive — read this',
-  unsafe: 'Not recommended',
+const FEASIBILITY = {
+  safe: { color: '#00FF87', title: 'Looks healthy', glow: 'rgba(57,255,139,0.18)' },
+  aggressive: {
+    color: '#FFC857',
+    title: 'Aggressive — read this',
+    glow: 'rgba(255,200,87,0.18)',
+  },
+  unsafe: { color: '#FF3DAC', title: 'Not recommended', glow: 'rgba(255,61,172,0.18)' },
 } as const;
 
 export default function Summary() {
@@ -49,7 +43,13 @@ export default function Summary() {
   ) {
     return (
       <Screen>
-        <Text className="text-text-primary mt-12">
+        <Text
+          style={{
+            fontFamily: 'SpaceGrotesk_500Medium',
+            color: '#F5F7FA',
+            marginTop: 48,
+          }}
+        >
           Missing info — please go back and fill in your stats.
         </Text>
       </Screen>
@@ -73,6 +73,7 @@ export default function Summary() {
   const plan = buildGoalPlan(goalInput);
   const feasibility = evaluateFeasibility(goalInput, plan);
   const weeklyPct = (plan.weeklyKgRate / draft.weightKg) * 100;
+  const fStyle = FEASIBILITY[feasibility.level];
 
   const onFinish = () => {
     const now = new Date().toISOString();
@@ -112,77 +113,270 @@ export default function Summary() {
   return (
     <Screen>
       <StepDots total={4} active={3} />
-      <Text className="text-text-primary text-3xl font-bold mt-2">Your plan</Text>
-      <Text className="text-text-secondary mb-6">Based on your stats and goal.</Text>
+      <Animated.View entering={FadeInDown.duration(500)}>
+        <Text
+          style={{
+            fontFamily: 'SpaceGrotesk_700Bold',
+            color: '#F5F7FA',
+            fontSize: 30,
+            letterSpacing: -0.5,
+            marginTop: 8,
+          }}
+        >
+          Your plan
+        </Text>
+        <Text
+          style={{
+            fontFamily: 'SpaceGrotesk_400Regular',
+            color: '#A0A6B8',
+            fontSize: 14,
+            marginBottom: 24,
+          }}
+        >
+          Based on your stats and goal.
+        </Text>
+      </Animated.View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="bg-bg-card border border-border-subtle rounded-2xl p-5 mb-3">
-          <Text className="text-text-secondary text-xs uppercase tracking-widest">
-            Daily calorie target
-          </Text>
-          <Text className="text-neon-green text-5xl font-black mt-1">
-            {plan.dailyKcalTarget}
-          </Text>
-          <Text className="text-text-secondary text-sm mt-1">
-            Maintenance: {Math.round(tdee)} kcal
-            {plan.dailyKcalDelta !== 0
-              ? ` · ${plan.dailyKcalDelta > 0 ? 'Surplus +' : 'Deficit '}${plan.dailyKcalDelta}`
-              : ''}
-          </Text>
-        </View>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+        <Animated.View entering={FadeInDown.delay(80).duration(500)}>
+          <View
+            style={{
+              borderRadius: 22,
+              overflow: 'hidden',
+              borderWidth: 1,
+              borderColor: 'rgba(57,255,139,0.3)',
+              padding: 22,
+              marginBottom: 12,
+              shadowColor: '#00FF87',
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.3,
+              shadowRadius: 20,
+              elevation: 10,
+            }}
+          >
+            <LinearGradient
+              colors={['rgba(57,255,139,0.16)', 'rgba(0,229,255,0.06)', 'rgba(18,21,28,0.9)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <Text
+              style={{
+                fontFamily: 'SpaceGrotesk_500Medium',
+                color: '#A0A6B8',
+                fontSize: 11,
+                letterSpacing: 2,
+                textTransform: 'uppercase',
+              }}
+            >
+              Daily calorie target
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 6 }}>
+              <Text
+                style={{
+                  fontFamily: 'SpaceGrotesk_700Bold',
+                  color: '#00FF87',
+                  fontSize: 56,
+                  letterSpacing: -1.5,
+                  textShadowColor: 'rgba(57,255,139,0.6)',
+                  textShadowOffset: { width: 0, height: 0 },
+                  textShadowRadius: 18,
+                }}
+              >
+                {plan.dailyKcalTarget}
+              </Text>
+              <Text
+                style={{
+                  fontFamily: 'SpaceGrotesk_500Medium',
+                  color: '#A0A6B8',
+                  fontSize: 16,
+                  marginLeft: 8,
+                }}
+              >
+                kcal
+              </Text>
+            </View>
+            <Text
+              style={{
+                fontFamily: 'SpaceGrotesk_400Regular',
+                color: '#A0A6B8',
+                fontSize: 13,
+                marginTop: 4,
+              }}
+            >
+              Maintenance: {Math.round(tdee)} kcal
+              {plan.dailyKcalDelta !== 0
+                ? ` · ${plan.dailyKcalDelta > 0 ? 'Surplus +' : 'Deficit '}${plan.dailyKcalDelta}`
+                : ''}
+            </Text>
+          </View>
+        </Animated.View>
 
-        <View className="flex-row gap-3 mb-3">
-          <View className="flex-1 bg-bg-card border border-border-subtle rounded-2xl p-4">
-            <Text className="text-text-secondary text-xs uppercase tracking-widest">BMI</Text>
-            <Text className="text-text-primary text-2xl font-bold mt-1">{bmi.toFixed(1)}</Text>
-            <Text className="text-text-muted text-xs mt-1 capitalize">{bmiCat}</Text>
-          </View>
-          <View className="flex-1 bg-bg-card border border-border-subtle rounded-2xl p-4">
-            <Text className="text-text-secondary text-xs uppercase tracking-widest">BMR</Text>
-            <Text className="text-text-primary text-2xl font-bold mt-1">{Math.round(bmr)}</Text>
-            <Text className="text-text-muted text-xs mt-1">kcal/day at rest</Text>
-          </View>
-        </View>
+        <Animated.View
+          entering={FadeInDown.delay(160).duration(500)}
+          style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}
+        >
+          <StatCard label="BMI" value={bmi.toFixed(1)} caption={bmiCat} />
+          <StatCard label="BMR" value={Math.round(bmr).toString()} caption="kcal at rest" />
+        </Animated.View>
 
         {goalDir !== 'maintain' && (
-          <View className="bg-bg-card border border-border-subtle rounded-2xl p-5 mb-3">
-            <Text className="text-text-secondary text-xs uppercase tracking-widest mb-1">
-              Pace
-            </Text>
-            <Text className="text-text-primary text-base">
-              {plan.weeklyKgRate.toFixed(2)} kg/week · {weeklyPct.toFixed(2)}% bodyweight/week
-            </Text>
-            <Text className="text-text-secondary text-sm mt-2">
-              ~{Math.round(plan.estimatedDays / 7)} weeks to {target.toFixed(1)} kg
-            </Text>
-          </View>
+          <Animated.View entering={FadeInDown.delay(220).duration(500)}>
+            <View
+              style={{
+                backgroundColor: 'rgba(18,21,28,0.85)',
+                borderColor: '#1F2330',
+                borderWidth: 1,
+                borderRadius: 22,
+                padding: 20,
+                marginBottom: 12,
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: 'SpaceGrotesk_500Medium',
+                  color: '#A0A6B8',
+                  fontSize: 11,
+                  letterSpacing: 2,
+                  textTransform: 'uppercase',
+                  marginBottom: 6,
+                }}
+              >
+                Pace
+              </Text>
+              <Text
+                style={{
+                  fontFamily: 'SpaceGrotesk_600SemiBold',
+                  color: '#F5F7FA',
+                  fontSize: 16,
+                }}
+              >
+                {plan.weeklyKgRate.toFixed(2)} kg/week · {weeklyPct.toFixed(2)}% bodyweight/week
+              </Text>
+              <Text
+                style={{
+                  fontFamily: 'SpaceGrotesk_400Regular',
+                  color: '#A0A6B8',
+                  fontSize: 13,
+                  marginTop: 6,
+                }}
+              >
+                ~{Math.round(plan.estimatedDays / 7)} weeks to {target.toFixed(1)} kg
+              </Text>
+            </View>
+          </Animated.View>
         )}
 
-        <View
-          className={`bg-bg-card border rounded-2xl p-5 mb-6 ${FEASIBILITY_BORDER[feasibility.level]}`}
-        >
-          <Text
-            className={`text-xs uppercase tracking-widest font-bold ${FEASIBILITY_COLOR[feasibility.level]}`}
+        <Animated.View entering={FadeInDown.delay(280).duration(500)}>
+          <View
+            style={{
+              borderRadius: 22,
+              overflow: 'hidden',
+              borderWidth: 1,
+              borderColor: fStyle.color + '66',
+              padding: 20,
+              marginBottom: 24,
+            }}
           >
-            {FEASIBILITY_TITLE[feasibility.level]}
-          </Text>
-          {feasibility.reasons.map((r, i) => (
-            <Text key={i} className="text-text-secondary text-sm mt-2 leading-5">
-              · {r}
+            <LinearGradient
+              colors={[fStyle.glow, 'rgba(18,21,28,0.9)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <Text
+              style={{
+                fontFamily: 'SpaceGrotesk_700Bold',
+                color: fStyle.color,
+                fontSize: 12,
+                letterSpacing: 2,
+                textTransform: 'uppercase',
+              }}
+            >
+              {fStyle.title}
             </Text>
-          ))}
-          {feasibility.suggestedWeeks ? (
-            <Text className="text-neon-cyan text-sm mt-3">
-              Suggested timeline: ~{feasibility.suggestedWeeks} weeks for a sustainable pace.
-            </Text>
-          ) : null}
-        </View>
+            {feasibility.reasons.map((r, i) => (
+              <Text
+                key={i}
+                style={{
+                  fontFamily: 'SpaceGrotesk_400Regular',
+                  color: '#A0A6B8',
+                  fontSize: 13,
+                  marginTop: 8,
+                  lineHeight: 19,
+                }}
+              >
+                · {r}
+              </Text>
+            ))}
+            {feasibility.suggestedWeeks ? (
+              <Text
+                style={{
+                  fontFamily: 'SpaceGrotesk_500Medium',
+                  color: '#00E5FF',
+                  fontSize: 13,
+                  marginTop: 12,
+                }}
+              >
+                Suggested timeline: ~{feasibility.suggestedWeeks} weeks for a sustainable pace.
+              </Text>
+            ) : null}
+          </View>
+        </Animated.View>
       </ScrollView>
 
-      <View className="pb-6 gap-2">
+      <View style={{ paddingBottom: 24, gap: 8 }}>
         <NeonButton label="Save & continue" onPress={onFinish} />
         <NeonButton label="Adjust goal" variant="ghost" onPress={() => router.back()} />
       </View>
     </Screen>
+  );
+}
+
+function StatCard({ label, value, caption }: { label: string; value: string; caption: string }) {
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: 'rgba(18,21,28,0.85)',
+        borderColor: '#1F2330',
+        borderWidth: 1,
+        borderRadius: 18,
+        padding: 16,
+      }}
+    >
+      <Text
+        style={{
+          fontFamily: 'SpaceGrotesk_500Medium',
+          color: '#A0A6B8',
+          fontSize: 11,
+          letterSpacing: 2,
+          textTransform: 'uppercase',
+        }}
+      >
+        {label}
+      </Text>
+      <Text
+        style={{
+          fontFamily: 'SpaceGrotesk_700Bold',
+          color: '#F5F7FA',
+          fontSize: 26,
+          marginTop: 4,
+        }}
+      >
+        {value}
+      </Text>
+      <Text
+        style={{
+          fontFamily: 'SpaceGrotesk_400Regular',
+          color: '#5C6275',
+          fontSize: 11,
+          marginTop: 2,
+          textTransform: 'capitalize',
+        }}
+      >
+        {caption}
+      </Text>
+    </View>
   );
 }

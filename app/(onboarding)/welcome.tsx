@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
 import { Text, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
+import { Logo } from '@/components/Logo';
 import { NeonButton } from '@/components/NeonButton';
 import { Screen } from '@/components/Screen';
 
@@ -8,22 +10,54 @@ export default function Welcome() {
   const router = useRouter();
   return (
     <Screen>
-      <View className="flex-1 justify-center">
-        <Text className="text-neon-green text-6xl font-black tracking-tight">joulesC</Text>
-        <Text className="text-text-primary text-2xl font-semibold mt-3">
-          Smart calories, honest goals.
-        </Text>
-        <Text className="text-text-secondary text-base mt-4 leading-6">
-          Set a goal, log meals, and we&apos;ll tell you if your target is healthy — not just
-          possible. Your data stays on your device.
-        </Text>
+      <View style={{ flex: 1, justifyContent: 'center' }}>
+        <Animated.View entering={FadeInDown.duration(700).springify()}>
+          <Logo size="xl" />
+        </Animated.View>
+        <Animated.View entering={FadeInDown.delay(180).duration(600).springify()}>
+          <Text
+            style={{
+              fontFamily: 'SpaceGrotesk_600SemiBold',
+              color: '#F5F7FA',
+              fontSize: 22,
+              marginTop: 18,
+              letterSpacing: 0.2,
+            }}
+          >
+            Smart calories, honest goals.
+          </Text>
+        </Animated.View>
+        <Animated.View entering={FadeInDown.delay(320).duration(600)}>
+          <Text
+            style={{
+              fontFamily: 'SpaceGrotesk_400Regular',
+              color: '#A0A6B8',
+              fontSize: 15,
+              marginTop: 14,
+              lineHeight: 22,
+            }}
+          >
+            Set a goal, log meals, and we&apos;ll tell you if your target is healthy — not just
+            possible. Your data stays on your device.
+          </Text>
+        </Animated.View>
       </View>
-      <View className="pb-8 gap-3">
+      <Animated.View
+        entering={FadeInUp.delay(480).duration(500).springify()}
+        style={{ paddingBottom: 32, gap: 12 }}
+      >
         <NeonButton label="Get started" onPress={() => router.push('/stats')} />
-        <Text className="text-text-muted text-xs text-center">
+        <Text
+          style={{
+            fontFamily: 'SpaceGrotesk_400Regular',
+            color: '#5C6275',
+            fontSize: 11,
+            textAlign: 'center',
+          }}
+        >
           joulesC offers general guidance, not medical advice.
         </Text>
-      </View>
+      </Animated.View>
     </Screen>
   );
 }

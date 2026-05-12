@@ -1,6 +1,8 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { NeonButton } from '@/components/NeonButton';
 import { Screen } from '@/components/Screen';
@@ -31,36 +33,94 @@ export default function Activity() {
   return (
     <Screen>
       <StepDots total={4} active={1} />
-      <Text className="text-text-primary text-3xl font-bold mt-2">Activity level</Text>
-      <Text className="text-text-secondary mb-6">Pick the one matching a typical week.</Text>
+      <Animated.View entering={FadeInDown.duration(500)}>
+        <Text
+          style={{
+            fontFamily: 'SpaceGrotesk_700Bold',
+            color: '#F5F7FA',
+            fontSize: 30,
+            letterSpacing: -0.5,
+            marginTop: 8,
+          }}
+        >
+          Activity level
+        </Text>
+        <Text
+          style={{
+            fontFamily: 'SpaceGrotesk_400Regular',
+            color: '#A0A6B8',
+            fontSize: 14,
+            marginBottom: 24,
+          }}
+        >
+          Pick the one matching a typical week.
+        </Text>
+      </Animated.View>
 
-      <View className="flex-1 gap-3">
-        {OPTIONS.map((opt) => {
+      <View style={{ flex: 1, gap: 12 }}>
+        {OPTIONS.map((opt, i) => {
           const selected = activity === opt.value;
           return (
-            <Pressable
+            <Animated.View
               key={opt.value}
-              onPress={() => setActivity(opt.value)}
-              className={`rounded-2xl border p-4 ${
-                selected
-                  ? 'border-neon-green bg-bg-elevated'
-                  : 'border-border-subtle bg-bg-card'
-              }`}
+              entering={FadeInDown.delay(80 + i * 60).duration(450)}
             >
-              <Text
-                className={`text-base font-bold ${
-                  selected ? 'text-neon-green' : 'text-text-primary'
-                }`}
+              <Pressable
+                onPress={() => setActivity(opt.value)}
+                style={{
+                  borderRadius: 18,
+                  overflow: 'hidden',
+                  borderWidth: 1,
+                  borderColor: selected ? '#00FF87' : '#1F2330',
+                  backgroundColor: 'rgba(18,21,28,0.85)',
+                  padding: 16,
+                  shadowColor: '#00FF87',
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: selected ? 0.4 : 0,
+                  shadowRadius: 18,
+                  elevation: selected ? 6 : 0,
+                }}
               >
-                {opt.title}
-              </Text>
-              <Text className="text-text-secondary text-sm mt-1">{opt.sub}</Text>
-            </Pressable>
+                {selected ? (
+                  <LinearGradient
+                    colors={['rgba(57,255,139,0.18)', 'rgba(0,229,255,0.05)']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                    }}
+                  />
+                ) : null}
+                <Text
+                  style={{
+                    fontFamily: 'SpaceGrotesk_700Bold',
+                    color: selected ? '#00FF87' : '#F5F7FA',
+                    fontSize: 16,
+                  }}
+                >
+                  {opt.title}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: 'SpaceGrotesk_400Regular',
+                    color: '#A0A6B8',
+                    fontSize: 13,
+                    marginTop: 4,
+                  }}
+                >
+                  {opt.sub}
+                </Text>
+              </Pressable>
+            </Animated.View>
           );
         })}
       </View>
 
-      <View className="pb-6">
+      <View style={{ paddingBottom: 24 }}>
         <NeonButton label="Continue" onPress={onNext} disabled={!activity} />
       </View>
     </Screen>

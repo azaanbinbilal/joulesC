@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { NeonButton } from '@/components/NeonButton';
 import { Screen } from '@/components/Screen';
@@ -11,6 +12,21 @@ import type { Sex } from '@/lib/health';
 import { cmToFtIn, ftInToCm, kgToLb, lbToKg } from '@/lib/units';
 import type { HeightUnit, WeightUnit } from '@/lib/units';
 import { useOnboardingStore } from '@/store/onboarding';
+
+const HEADING = {
+  fontFamily: 'SpaceGrotesk_700Bold',
+  color: '#F5F7FA',
+  fontSize: 30,
+  letterSpacing: -0.5,
+  marginTop: 8,
+} as const;
+
+const SUBHEAD = {
+  fontFamily: 'SpaceGrotesk_400Regular',
+  color: '#A0A6B8',
+  fontSize: 14,
+  marginBottom: 24,
+} as const;
 
 export default function Stats() {
   const router = useRouter();
@@ -73,100 +89,106 @@ export default function Stats() {
   return (
     <Screen>
       <StepDots total={4} active={0} />
-      <Text className="text-text-primary text-3xl font-bold mt-2">About you</Text>
-      <Text className="text-text-secondary mb-6">
-        We use these to estimate your daily burn.
-      </Text>
+      <Animated.View entering={FadeInDown.duration(500)}>
+        <Text style={HEADING}>About you</Text>
+        <Text style={SUBHEAD}>We use these to estimate your daily burn.</Text>
+      </Animated.View>
 
       <ScrollView
-        className="flex-1"
+        style={{ flex: 1 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <StatInput
-          label="Name"
-          value={name}
-          onChangeText={setName}
-          placeholder="What should we call you?"
-          keyboardType="default"
-        />
-        <StatInput
-          label="Age"
-          value={age}
-          onChangeText={setAge}
-          suffix="years"
-          placeholder="25"
-        />
-        <SegmentedControl<Sex>
-          label="Biological sex (for BMR calc)"
-          options={[
-            { value: 'male', label: 'Male' },
-            { value: 'female', label: 'Female' },
-          ]}
-          value={sex}
-          onChange={setSex}
-        />
-
-        <SegmentedControl<WeightUnit>
-          label="Weight unit"
-          options={[
-            { value: 'kg', label: 'kg' },
-            { value: 'lb', label: 'lb' },
-          ]}
-          value={weightUnit}
-          onChange={setWeightUnit}
-        />
-        <StatInput
-          label="Weight"
-          value={weight}
-          onChangeText={setWeight}
-          suffix={weightUnit}
-          placeholder={weightUnit === 'kg' ? '70' : '154'}
-        />
-
-        <SegmentedControl<HeightUnit>
-          label="Height unit"
-          options={[
-            { value: 'cm', label: 'cm' },
-            { value: 'ft_in', label: 'ft + in' },
-          ]}
-          value={heightUnit}
-          onChange={setHeightUnit}
-        />
-        {heightUnit === 'cm' ? (
+        <Animated.View entering={FadeInDown.delay(80).duration(500)}>
           <StatInput
-            label="Height"
-            value={heightCm}
-            onChangeText={setHeightCm}
-            suffix="cm"
-            placeholder="175"
+            label="Name"
+            value={name}
+            onChangeText={setName}
+            placeholder="What should we call you?"
+            keyboardType="default"
           />
-        ) : (
-          <View className="flex-row gap-3">
-            <View className="flex-1">
-              <StatInput
-                label="Feet"
-                value={ft}
-                onChangeText={setFt}
-                suffix="ft"
-                placeholder="5"
-              />
+          <StatInput
+            label="Age"
+            value={age}
+            onChangeText={setAge}
+            suffix="years"
+            placeholder="25"
+          />
+          <SegmentedControl<Sex>
+            label="Biological sex (for BMR calc)"
+            options={[
+              { value: 'male', label: 'Male' },
+              { value: 'female', label: 'Female' },
+            ]}
+            value={sex}
+            onChange={setSex}
+          />
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(160).duration(500)}>
+          <SegmentedControl<WeightUnit>
+            label="Weight unit"
+            options={[
+              { value: 'kg', label: 'kg' },
+              { value: 'lb', label: 'lb' },
+            ]}
+            value={weightUnit}
+            onChange={setWeightUnit}
+          />
+          <StatInput
+            label="Weight"
+            value={weight}
+            onChangeText={setWeight}
+            suffix={weightUnit}
+            placeholder={weightUnit === 'kg' ? '70' : '154'}
+          />
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(240).duration(500)}>
+          <SegmentedControl<HeightUnit>
+            label="Height unit"
+            options={[
+              { value: 'cm', label: 'cm' },
+              { value: 'ft_in', label: 'ft + in' },
+            ]}
+            value={heightUnit}
+            onChange={setHeightUnit}
+          />
+          {heightUnit === 'cm' ? (
+            <StatInput
+              label="Height"
+              value={heightCm}
+              onChangeText={setHeightCm}
+              suffix="cm"
+              placeholder="175"
+            />
+          ) : (
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <View style={{ flex: 1 }}>
+                <StatInput
+                  label="Feet"
+                  value={ft}
+                  onChangeText={setFt}
+                  suffix="ft"
+                  placeholder="5"
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <StatInput
+                  label="Inches"
+                  value={inches}
+                  onChangeText={setInches}
+                  suffix="in"
+                  placeholder="9"
+                />
+              </View>
             </View>
-            <View className="flex-1">
-              <StatInput
-                label="Inches"
-                value={inches}
-                onChangeText={setInches}
-                suffix="in"
-                placeholder="9"
-              />
-            </View>
-          </View>
-        )}
-        <View className="h-24" />
+          )}
+        </Animated.View>
+        <View style={{ height: 96 }} />
       </ScrollView>
 
-      <View className="pb-6">
+      <View style={{ paddingBottom: 24 }}>
         <NeonButton label="Continue" onPress={onNext} disabled={!valid} />
       </View>
     </Screen>

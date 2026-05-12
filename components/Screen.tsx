@@ -1,11 +1,22 @@
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 export function Screen({ children }: { children: ReactNode }) {
   return (
-    <SafeAreaView className="flex-1 bg-bg" edges={['top', 'bottom']}>
-      <View className="flex-1 px-6 pt-4">{children}</View>
-    </SafeAreaView>
+    <View style={{ flex: 1, backgroundColor: '#05060A' }}>
+      <AnimatedBackground />
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
+        <Animated.View
+          entering={FadeIn.duration(280)}
+          style={{ flex: 1, paddingHorizontal: 24, paddingTop: 16 }}
+        >
+          {children}
+        </Animated.View>
+      </SafeAreaView>
+    </View>
   );
 }
