@@ -48,6 +48,10 @@ export default function RootLayout() {
         >
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="(onboarding)" />
+          <Stack.Screen
+            name="food-search"
+            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+          />
         </Stack>
         <StatusBar style="light" />
       </SafeAreaProvider>

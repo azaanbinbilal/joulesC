@@ -2,12 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Web: remove browser default focus ring on text inputs — our animated
-   neon-green border is the focus indicator. */
+/* Web: remove every browser default focus indicator on text inputs.
+   Our animated neon-green border is the focus indicator. !important wins
+   over RN Web's injected focus styles. */
+input,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
 input:focus,
 input:focus-visible,
+input:focus-within,
 textarea:focus,
-textarea:focus-visible {
-  outline: none;
-  box-shadow: none;
+textarea:focus-visible,
+textarea:focus-within {
+  outline: none !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  -webkit-appearance: none !important;
+  border-color: inherit !important;
 }
