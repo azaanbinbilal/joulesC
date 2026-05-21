@@ -16,8 +16,10 @@ import {
   scalePer100g,
   type MacroTotals,
 } from '@/lib/macros';
+import { useActivityLogStore } from '@/store/activityLog';
 import { todayISO, useFoodLogStore } from '@/store/foodLog';
 import { useProfileStore } from '@/store/profile';
+import type { ActivityEntry } from '@/types/activity';
 import { MEAL_LABEL, MEAL_ORDER, type FoodEntry, type MealType } from '@/types/food';
 
 export default function Dashboard() {
@@ -26,21 +28,31 @@ export default function Dashboard() {
   const clearProfile = useProfileStore((s) => s.clearProfile);
   const entries = useFoodLogStore((s) => s.entries);
   const removeEntry = useFoodLogStore((s) => s.removeEntry);
+  const activities = useActivityLogStore((s) => s.entries);
+  const removeActivity = useActivityLogStore((s) => s.removeEntry);
 
   const today = todayISO();
   const todayEntries = useMemo(
     () => entries.filter((e) => e.date === today),
     [entries, today],
   );
+  const todayActivities = useMemo(
+    () => activities.filter((a) => a.date === today),
+    [activities, today],
+  );
 
-  const { target, totals, kcalTarget } = useMemo(() => {
+  const { target, totals, burnedKcal } = useMemo(() => {
     if (!profile) {
-      return { target: null as null | ReturnType<typeof computeMacroTargets>, totals: emptyTotals(), kcalTarget: 0 };
+      return {
+        target: null as null | ReturnType<typeof computeMacroTargets>,
+        totals: emptyTotals(),
+        burnedKcal: 0,
+      };
     }
     const bmr = calcBMR(profile.weightKg, profile.heightCm, profile.age, profile.sex);
     const tdee = calcTDEE(bmr, profile.activity);
     let kcal = Math.round(tdee);
-    let direction = profile.goal?.direction ?? 'maintain';
+    const direction = profile.goal?.direction ?? 'maintain';
     if (profile.goal && profile.goal.direction !== 'maintain') {
       const plan = buildGoalPlan({
         currentWeightKg: profile.weightKg,
@@ -55,10 +67,13 @@ export default function Dashboard() {
       (acc, e) => addTotals(acc, scalePer100g(e.per100g, e.grams)),
       emptyTotals(),
     );
-    return { target: macroTarget, totals: summed, kcalTarget: kcal };
-  }, [profile, todayEntries]);
+    const burned = todayActivities.reduce((s, a) => s + a.kcalBurned, 0);
+    return { target: macroTarget, totals: summed, burnedKcal: burned };
+  }, [profile, todayEntries, todayActivities]);
 
   if (!profile || !target) return null;
+
+  const effectiveKcalTarget = target.kcal + burnedKcal;
 
   const entriesByMeal: Record<MealType, FoodEntry[]> = {
     breakfast: [],
@@ -121,14 +136,43 @@ export default function Dashboard() {
               end={{ x: 1, y: 1 }}
               style={StyleSheet.absoluteFill}
             />
-            <View style={{ alignItems: 'center', marginBottom: 18 }}>
+            <View style={{ alignItems: 'center', marginBottom: 12 }}>
               <MacroRing
                 size={200}
                 strokeWidth={14}
                 value={totals.kcal}
-                target={target.kcal}
+                target={effectiveKcalTarget}
               />
             </View>
+
+            {burnedKcal > 0 ? (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignSelf: 'center',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(255,200,87,0.12)',
+                  borderColor: 'rgba(255,200,87,0.4)',
+                  borderWidth: 1,
+                  borderRadius: 999,
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  marginBottom: 14,
+                }}
+              >
+                <Text style={{ fontSize: 14, marginRight: 4 }}>🔥</Text>
+                <Text
+                  style={{
+                    fontFamily: 'SpaceGrotesk_600SemiBold',
+                    color: '#FFC857',
+                    fontSize: 12,
+                  }}
+                >
+                  +{burnedKcal} kcal from activity
+                </Text>
+              </View>
+            ) : null}
+
             <View style={{ flexDirection: 'row', gap: 16 }}>
               <MacroBar
                 label="Protein"
@@ -175,8 +219,21 @@ export default function Dashboard() {
           ))}
         </Animated.View>
 
+        <Animated.View entering={FadeInDown.delay(280).duration(500)} style={{ marginTop: 4 }}>
+          <ActivitySection
+            entries={todayActivities}
+            burned={burnedKcal}
+            onRemove={removeActivity}
+          />
+        </Animated.View>
+
         <View style={{ marginTop: 8, gap: 8 }}>
           <NeonButton label="+ Add food" onPress={() => router.push('/food-search')} />
+          <NeonButton
+            label="+ Log activity"
+            variant="secondary"
+            onPress={() => router.push('/activity-log')}
+          />
           <NeonButton label="Reset profile" variant="ghost" onPress={clearProfile} />
         </View>
       </ScrollView>
@@ -295,6 +352,151 @@ function FoodRow({ entry, onRemove }: { entry: FoodEntry; onRemove: () => void }
           }}
         >
           {entry.grams}g · {kcal} kcal · {protein}g P
+        </Text>
+      </View>
+      <Pressable onPress={onRemove} hitSlop={10}>
+        <Text
+          style={{
+            fontFamily: 'SpaceGrotesk_500Medium',
+            color: '#5C6275',
+            fontSize: 18,
+          }}
+        >
+          ×
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function ActivitySection({
+  entries,
+  burned,
+  onRemove,
+}: {
+  entries: ActivityEntry[];
+  burned: number;
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <View style={{ marginBottom: 14 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'baseline',
+          marginBottom: 8,
+        }}
+      >
+        <Text
+          style={{
+            fontFamily: 'SpaceGrotesk_600SemiBold',
+            color: '#F5F7FA',
+            fontSize: 15,
+            letterSpacing: 0.3,
+          }}
+        >
+          Activity 🔥
+        </Text>
+        <Text
+          style={{
+            fontFamily: 'SpaceGrotesk_500Medium',
+            color: burned > 0 ? '#FFC857' : '#A0A6B8',
+            fontSize: 12,
+          }}
+        >
+          {entries.length === 0 ? 'No activity yet' : `${burned} kcal burned`}
+        </Text>
+      </View>
+      {entries.length === 0 ? (
+        <View
+          style={{
+            borderColor: '#1F2330',
+            borderWidth: 1,
+            borderStyle: 'dashed',
+            borderRadius: 12,
+            paddingVertical: 14,
+            paddingHorizontal: 14,
+            backgroundColor: 'rgba(18,21,28,0.5)',
+          }}
+        >
+          <Text
+            style={{
+              fontFamily: 'SpaceGrotesk_400Regular',
+              color: '#5C6275',
+              fontSize: 12,
+            }}
+          >
+            Log a workout to earn extra calorie budget.
+          </Text>
+        </View>
+      ) : (
+        entries.map((a) => (
+          <ActivityRow key={a.id} entry={a} onRemove={() => onRemove(a.id)} />
+        ))
+      )}
+    </View>
+  );
+}
+
+function ActivityRow({
+  entry,
+  onRemove,
+}: {
+  entry: ActivityEntry;
+  onRemove: () => void;
+}) {
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(18,21,28,0.85)',
+        borderColor: '#1F2330',
+        borderWidth: 1,
+        borderLeftWidth: 4,
+        borderLeftColor: '#FFC857',
+        borderRadius: 12,
+        padding: 12,
+        marginBottom: 8,
+      }}
+    >
+      <View
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          backgroundColor: 'rgba(5,6,10,0.6)',
+          borderColor: '#2B3142',
+          borderWidth: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginRight: 10,
+        }}
+      >
+        <Text style={{ fontSize: 18 }}>{entry.emoji}</Text>
+      </View>
+      <View style={{ flex: 1, paddingRight: 8 }}>
+        <Text
+          style={{
+            fontFamily: 'SpaceGrotesk_600SemiBold',
+            color: '#F5F7FA',
+            fontSize: 13,
+          }}
+          numberOfLines={1}
+        >
+          {entry.name}
+        </Text>
+        <Text
+          style={{
+            fontFamily: 'SpaceGrotesk_400Regular',
+            color: '#A0A6B8',
+            fontSize: 11,
+            marginTop: 2,
+          }}
+        >
+          {entry.minutes} min ·{' '}
+          <Text style={{ color: '#FFC857' }}>{entry.kcalBurned} kcal</Text>
         </Text>
       </View>
       <Pressable onPress={onRemove} hitSlop={10}>

@@ -52,6 +52,10 @@ export default function RootLayout() {
             name="food-search"
             options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
           />
+          <Stack.Screen
+            name="activity-log"
+            options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+          />
         </Stack>
         <StatusBar style="light" />
       </SafeAreaProvider>
