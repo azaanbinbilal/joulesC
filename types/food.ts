@@ -16,6 +16,9 @@ export interface FoodEntry {
   brand?: string;
   meal: MealType;
   grams: number;
+  /** Natural-language serving label, e.g. "1 cup" or "2 eggs". Optional —
+   *  legacy entries written before this field existed will be undefined. */
+  servingLabel?: string;
   per100g: {
     kcal: number;
     protein: number;

@@ -8,6 +8,7 @@ import { MacroBar } from '@/components/MacroBar';
 import { MacroRing } from '@/components/MacroRing';
 import { NeonButton } from '@/components/NeonButton';
 import { Screen } from '@/components/Screen';
+import { SuggestionsCard } from '@/components/SuggestionsCard';
 import { buildGoalPlan, calcBMR, calcTDEE } from '@/lib/health';
 import {
   addTotals,
@@ -16,6 +17,7 @@ import {
   scalePer100g,
   type MacroTotals,
 } from '@/lib/macros';
+import { generateSuggestions } from '@/lib/suggestions';
 import { useActivityLogStore } from '@/store/activityLog';
 import { todayISO, useFoodLogStore } from '@/store/foodLog';
 import { useProfileStore } from '@/store/profile';
@@ -70,6 +72,17 @@ export default function Dashboard() {
     const burned = todayActivities.reduce((s, a) => s + a.kcalBurned, 0);
     return { target: macroTarget, totals: summed, burnedKcal: burned };
   }, [profile, todayEntries, todayActivities]);
+
+  const suggestions = useMemo(() => {
+    if (!target) return [];
+    return generateSuggestions({
+      targets: target,
+      totals,
+      burnedKcal,
+      recentEntries: todayEntries,
+      hour: new Date().getHours(),
+    });
+  }, [target, totals, burnedKcal, todayEntries]);
 
   if (!profile || !target) return null;
 
@@ -208,7 +221,11 @@ export default function Dashboard() {
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(220).duration(500)} style={{ marginTop: 18 }}>
+        <Animated.View entering={FadeInDown.delay(180).duration(500)}>
+          <SuggestionsCard suggestions={suggestions} />
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(240).duration(500)} style={{ marginTop: 18 }}>
           {MEAL_ORDER.map((meal) => (
             <MealSection
               key={meal}
@@ -319,6 +336,12 @@ function MealSection({
 function FoodRow({ entry, onRemove }: { entry: FoodEntry; onRemove: () => void }) {
   const kcal = Math.round((entry.per100g.kcal * entry.grams) / 100);
   const protein = ((entry.per100g.protein * entry.grams) / 100).toFixed(1);
+  const isPureGramsLabel =
+    !!entry.servingLabel && /^\d+\s*g$/.test(entry.servingLabel.replace(/\s/g, ''));
+  const servingDisplay =
+    entry.servingLabel && !isPureGramsLabel
+      ? `${entry.servingLabel} · ${entry.grams}g`
+      : `${entry.grams}g`;
   return (
     <View
       style={{
@@ -351,7 +374,7 @@ function FoodRow({ entry, onRemove }: { entry: FoodEntry; onRemove: () => void }
             marginTop: 2,
           }}
         >
-          {entry.grams}g · {kcal} kcal · {protein}g P
+          {servingDisplay} · {kcal} kcal · {protein}g P
         </Text>
       </View>
       <Pressable onPress={onRemove} hitSlop={10}>

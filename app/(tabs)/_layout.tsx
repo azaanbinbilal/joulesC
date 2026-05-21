@@ -13,12 +13,9 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: '#0D0F14',
-          borderTopColor: '#1F2330',
-        },
-        tabBarActiveTintColor: '#00FF87',
-        tabBarInactiveTintColor: '#5C6275',
+        // Single-tab layout for now — the bottom tab bar adds no value
+        // and was confusing as a non-functional "Home" button.
+        tabBarStyle: { display: 'none' },
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
