@@ -4,10 +4,12 @@ import { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
+import { HydrationCard } from '@/components/HydrationCard';
 import { MacroBar } from '@/components/MacroBar';
 import { MacroRing } from '@/components/MacroRing';
 import { NeonButton } from '@/components/NeonButton';
 import { Screen } from '@/components/Screen';
+import { StreakChip } from '@/components/StreakChip';
 import { SuggestionsCard } from '@/components/SuggestionsCard';
 import { buildGoalPlan, calcBMR, calcTDEE } from '@/lib/health';
 import {
@@ -17,12 +19,15 @@ import {
   scalePer100g,
   type MacroTotals,
 } from '@/lib/macros';
+import { computeStreak } from '@/lib/streak';
 import { generateSuggestions } from '@/lib/suggestions';
 import { useActivityLogStore } from '@/store/activityLog';
 import { todayISO, useFoodLogStore } from '@/store/foodLog';
+import { useHydrationLogStore } from '@/store/hydrationLog';
 import { useProfileStore } from '@/store/profile';
 import type { ActivityEntry } from '@/types/activity';
 import { MEAL_LABEL, MEAL_ORDER, type FoodEntry, type MealType } from '@/types/food';
+import { DEFAULT_HYDRATION_GOAL_ML } from '@/types/hydration';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -32,8 +37,12 @@ export default function Dashboard() {
   const removeEntry = useFoodLogStore((s) => s.removeEntry);
   const activities = useActivityLogStore((s) => s.entries);
   const removeActivity = useActivityLogStore((s) => s.removeEntry);
+  const hydrationEntries = useHydrationLogStore((s) => s.entries);
+  const addHydration = useHydrationLogStore((s) => s.addEntry);
+  const removeHydration = useHydrationLogStore((s) => s.removeEntry);
 
   const today = todayISO();
+  const hydrationGoalMl = DEFAULT_HYDRATION_GOAL_ML;
   const todayEntries = useMemo(
     () => entries.filter((e) => e.date === today),
     [entries, today],
@@ -91,6 +100,29 @@ export default function Dashboard() {
     return { target: macroTarget, totals: summed, burnedKcal: burned };
   }, [profile, todayEntries, todayActivities]);
 
+  const hydration = useMemo(() => {
+    const todayMl = hydrationEntries
+      .filter((e) => e.date === today)
+      .reduce((s, e) => s + e.ml, 0);
+    const todays = hydrationEntries.filter((e) => e.date === today);
+    const lastTodayId = todays.length > 0 ? todays[todays.length - 1].id : null;
+    return { todayMl, lastTodayId };
+  }, [hydrationEntries, today]);
+
+  const streakDays = useMemo(() => {
+    const foodDates = new Set(entries.map((e) => e.date));
+    const hydrationByDate = new Map<string, number>();
+    for (const h of hydrationEntries) {
+      hydrationByDate.set(h.date, (hydrationByDate.get(h.date) ?? 0) + h.ml);
+    }
+    return computeStreak({
+      foodDates,
+      hydrationTotalsByDate: hydrationByDate,
+      hydrationGoalMl,
+      today,
+    });
+  }, [entries, hydrationEntries, hydrationGoalMl, today]);
+
   const suggestions = useMemo(() => {
     if (!target) return [];
     return generateSuggestions({
@@ -124,26 +156,39 @@ export default function Dashboard() {
         contentContainerStyle={{ paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View entering={FadeInDown.duration(450)}>
-          <Text
-            style={{
-              fontFamily: 'SpaceGrotesk_400Regular',
-              color: '#A0A6B8',
-              fontSize: 14,
-            }}
-          >
-            Welcome back,
-          </Text>
-          <Text
-            style={{
-              fontFamily: 'SpaceGrotesk_700Bold',
-              color: '#F5F7FA',
-              fontSize: 30,
-              letterSpacing: -0.5,
-            }}
-          >
-            {profile.name || 'there'}
-          </Text>
+        <Animated.View
+          entering={FadeInDown.duration(450)}
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'flex-end',
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <Text
+              style={{
+                fontFamily: 'SpaceGrotesk_400Regular',
+                color: '#A0A6B8',
+                fontSize: 14,
+              }}
+            >
+              Welcome back,
+            </Text>
+            <Text
+              style={{
+                fontFamily: 'SpaceGrotesk_700Bold',
+                color: '#F5F7FA',
+                fontSize: 30,
+                letterSpacing: -0.5,
+              }}
+              numberOfLines={1}
+            >
+              {profile.name || 'there'}
+            </Text>
+          </View>
+          <View style={{ paddingBottom: 6, marginLeft: 12 }}>
+            <StreakChip days={streakDays} />
+          </View>
         </Animated.View>
 
         <Animated.View
@@ -242,7 +287,21 @@ export default function Dashboard() {
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(180).duration(500)}>
+        <Animated.View
+          entering={FadeInDown.delay(160).duration(500)}
+          style={{ marginTop: 14 }}
+        >
+          <HydrationCard
+            totalMl={hydration.todayMl}
+            goalMl={hydrationGoalMl}
+            onAdd={(ml) => addHydration({ ml })}
+            onUndoLast={
+              hydration.lastTodayId ? () => removeHydration(hydration.lastTodayId!) : null
+            }
+          />
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(220).duration(500)}>
           <SuggestionsCard suggestions={suggestions} />
         </Animated.View>
 
