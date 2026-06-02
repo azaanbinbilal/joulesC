@@ -43,6 +43,24 @@ export default function Dashboard() {
     [activities, today],
   );
 
+  const weekStats = useMemo(() => {
+    const start = new Date(today + 'T00:00:00');
+    start.setDate(start.getDate() - 6);
+    const y = start.getFullYear();
+    const m = String(start.getMonth() + 1).padStart(2, '0');
+    const d = String(start.getDate()).padStart(2, '0');
+    const startDate = `${y}-${m}-${d}`;
+    const weekEntries = entries.filter((e) => e.date >= startDate && e.date <= today);
+    const weekActs = activities.filter((a) => a.date >= startDate && a.date <= today);
+    const consumed = weekEntries.reduce(
+      (s, e) => s + (e.per100g.kcal * e.grams) / 100,
+      0,
+    );
+    const burned = weekActs.reduce((s, a) => s + a.kcalBurned, 0);
+    const daysLogged = new Set(weekEntries.map((e) => e.date)).size;
+    return { consumed, burned, daysLogged };
+  }, [entries, activities, today]);
+
   const { target, totals, burnedKcal } = useMemo(() => {
     if (!profile) {
       return {
@@ -81,8 +99,11 @@ export default function Dashboard() {
       burnedKcal,
       recentEntries: todayEntries,
       hour: new Date().getHours(),
+      weekKcalConsumed: weekStats.consumed,
+      weekKcalBurned: weekStats.burned,
+      weekDaysLogged: weekStats.daysLogged,
     });
-  }, [target, totals, burnedKcal, todayEntries]);
+  }, [target, totals, burnedKcal, todayEntries, weekStats]);
 
   if (!profile || !target) return null;
 

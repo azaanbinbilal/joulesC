@@ -384,8 +384,7 @@ export default function FoodSearch() {
           const emoji = foodEmoji(r.description);
           return (
             <Animated.View key={r.fdcId} entering={FadeInDown.delay(i * 25).duration(280)}>
-              <Pressable
-                onPress={() => onSelectResult(r, active)}
+              <View
                 style={{
                   backgroundColor: 'rgba(18,21,28,0.85)',
                   borderColor: active ? '#00FF87' : '#1F2330',
@@ -402,7 +401,7 @@ export default function FoodSearch() {
                   elevation: active ? 6 : 0,
                 }}
               >
-                <View style={{ flexDirection: 'row' }}>
+                <Pressable onPress={() => onSelectResult(r, active)} style={{ flexDirection: 'row' }}>
                   <View
                     style={{
                       width: 44,
@@ -484,7 +483,7 @@ export default function FoodSearch() {
                       </View>
                     ) : null}
                   </View>
-                </View>
+                </Pressable>
 
                 {active ? (
                   <Animated.View entering={FadeIn.duration(220)} style={{ marginTop: 14 }}>
@@ -709,7 +708,7 @@ export default function FoodSearch() {
                     <NeonButton label={buttonLabel} onPress={onAdd} disabled={!valid} />
                   </Animated.View>
                 ) : null}
-              </Pressable>
+              </View>
             </Animated.View>
           );
         })}

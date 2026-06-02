@@ -34,6 +34,12 @@ export interface SuggestionInput {
   burnedKcal: number;
   recentEntries: FoodEntry[];
   hour: number;
+  /** Total kcal consumed across the last 7 days including today. */
+  weekKcalConsumed: number;
+  /** Total kcal burned via logged activity across the last 7 days including today. */
+  weekKcalBurned: number;
+  /** Distinct days in the last 7 with at least one food entry. */
+  weekDaysLogged: number;
 }
 
 export function generateSuggestions(input: SuggestionInput): Suggestion[] {
@@ -42,6 +48,53 @@ export function generateSuggestions(input: SuggestionInput): Suggestion[] {
   const remainingKcal = effectiveKcal - input.totals.kcal;
   const remainingProtein = input.targets.protein - input.totals.protein;
   const remainingFiber = input.targets.fiber - input.totals.fiber;
+
+  if (remainingKcal < 0) {
+    const overBy = Math.abs(Math.round(remainingKcal));
+
+    if (overBy < 200) {
+      out.push({
+        id: 'over-mild',
+        emoji: '👟',
+        text: `You're slightly over today — a 20-min evening walk will balance it out.`,
+        kind: 'activity',
+      });
+    } else if (overBy <= 500) {
+      out.push({
+        id: 'over-moderate',
+        emoji: '🔄',
+        text: `You've exceeded today's target by ${overBy} kcal. Try reducing tomorrow's carbs by one serving to compensate.`,
+        kind: 'tip',
+      });
+    } else {
+      out.push({
+        id: 'over-high',
+        emoji: '📅',
+        text: `High calorie day — no stress. Aim for a 200 kcal deficit tomorrow and the day after to balance the week.`,
+        kind: 'tip',
+      });
+    }
+
+    const weeklyNet = input.weekKcalConsumed - input.weekKcalBurned;
+    const weeklyTarget = input.targets.kcal * 7;
+    if (input.weekDaysLogged >= 3 && weeklyNet <= weeklyTarget) {
+      out.push({
+        id: 'week-on-track',
+        emoji: '✅',
+        text: `You're still on track for the week overall — keep it up!`,
+        kind: 'tip',
+      });
+    }
+
+    if (input.hour >= 20) {
+      out.push({
+        id: 'tomorrow-plan',
+        emoji: '🌅',
+        text: `For tomorrow, try: light breakfast (~300 kcal), protein lunch (~500 kcal), and skip evening snacks.`,
+        kind: 'timing',
+      });
+    }
+  }
 
   const sorted = [...input.recentEntries].sort(
     (a, b) => Date.parse(b.loggedAt) - Date.parse(a.loggedAt),
@@ -66,11 +119,12 @@ export function generateSuggestions(input: SuggestionInput): Suggestion[] {
     const lastKcal = (last.per100g.kcal * last.grams) / 100;
     const minutesAgo = (Date.now() - Date.parse(last.loggedAt)) / 60000;
     if (lastKcal >= 500 && minutesAgo < 90) {
-      const steps = Math.round((lastKcal * 0.5) / 0.04);
+      const walkMinutes = 10;
+      const steps = Math.min(walkMinutes * 100, 2000);
       out.push({
         id: `walk-${last.id}`,
         emoji: '🚶',
-        text: `Heavy meal — a 10-min walk (~${steps.toLocaleString()} steps) helps digestion and blunts the glucose spike.`,
+        text: `Heavy meal — a ${walkMinutes}-min walk (~${steps.toLocaleString()} steps) helps digestion and blunts the glucose spike.`,
         kind: 'activity',
       });
     }
@@ -108,17 +162,6 @@ export function generateSuggestions(input: SuggestionInput): Suggestion[] {
       emoji: '🌙',
       text: `Wrapping up late? Try to finish eating 2–3 hrs before bed — better sleep and easier digestion.`,
       kind: 'timing',
-    });
-  }
-
-  if (remainingKcal < -100) {
-    const kcalOver = Math.abs(Math.round(remainingKcal));
-    const walkMin = Math.round(kcalOver / 5);
-    out.push({
-      id: 'over-budget',
-      emoji: '⚖️',
-      text: `${kcalOver} kcal over today. A ~${walkMin}-min walk roughly evens it out.`,
-      kind: 'activity',
     });
   }
 
