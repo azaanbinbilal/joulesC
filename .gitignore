@@ -39,6 +39,10 @@ yarn-error.*
 .easignore
 eas-secrets.json
 
+# Supabase CLI local cache
+supabase/.temp/
+supabase/.branches/
+
 # typescript
 *.tsbuildinfo
 
