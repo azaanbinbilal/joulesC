@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
+import { HydrationJug } from '@/components/HydrationJug';
+
 const INPUT_OUTLINE_RESET = {
   outlineStyle: 'none',
   outlineWidth: 0,
@@ -100,23 +102,8 @@ export function HydrationCard({ totalMl, goalMl, onAdd, onUndoLast }: Props) {
         </Text>
       </View>
 
-      <View
-        style={{
-          height: 10,
-          borderRadius: 999,
-          backgroundColor: 'rgba(31,35,48,0.9)',
-          overflow: 'hidden',
-          marginBottom: 14,
-        }}
-      >
-        <View style={{ width: `${ratio * 100}%`, height: '100%' }}>
-          <LinearGradient
-            colors={reached ? ['#5EFFB1', '#00FF87'] : ['#00E5FF', '#8A5CF6']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
+      <View style={{ alignItems: 'center', marginVertical: 6, marginBottom: 14 }}>
+        <HydrationJug ratio={ratio} reached={reached} />
       </View>
 
       <View style={{ flexDirection: 'row', gap: 8 }}>

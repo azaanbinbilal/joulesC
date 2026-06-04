@@ -327,6 +327,11 @@ export default function Dashboard() {
         <View style={{ marginTop: 8, gap: 8 }}>
           <NeonButton label="+ Add food" onPress={() => router.push('/food-search')} />
           <NeonButton
+            label="📸 Snap food photo"
+            variant="secondary"
+            onPress={() => router.push('/photo-log')}
+          />
+          <NeonButton
             label="+ Log activity"
             variant="secondary"
             onPress={() => router.push('/activity-log')}

@@ -38,6 +38,13 @@
             "backgroundColor": "#000000"
           }
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "joulesC uses the camera to snap photos of your meals so they can be auto-logged.",
+          "photosPermission": "joulesC needs access to your photos to read meal images you pick from the library."
+        }
       ]
     ],
     "experiments": {

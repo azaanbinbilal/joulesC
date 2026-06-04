@@ -1,0 +1,7 @@
+# Supabase project config for joulesC.
+# Edit `project_id` to match your own project ref (Settings > General > Reference ID).
+project_id = "joulesc"
+
+[functions.gemini-vision-food]
+# Allow unauthenticated invocations (we rely on the anon key, no per-user auth yet).
+verify_jwt = false
